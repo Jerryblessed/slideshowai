@@ -6,7 +6,7 @@ This guide helps you set up the **AI Slideshow Creator**, a Flask web app that u
 
 > 🎥 [**Pitch Deck**](https://docs.google.com/presentation/d/1la6VuclIqyZKOKgzifkMSvo_3OJAu-2QX1-pff0Y2a0/edit?usp=sharing) – View the official presentation slide submitted for United Hacks V5!
 >
-> 🌐 [**Live Web App**](https://lighteducation.pythonanywhere.com/) – Try out the deployed version now!
+> 🌐 [**Live Web App**](http://prompt2slides.eu-north-1.elasticbeanstalk.com/) – Try out the deployed version now!
 
 ---
 
@@ -106,6 +106,6 @@ To keep local development secure and clean, use `.env` + [python-dotenv](https:/
 📚 For full context and slides, view the
 🎞️ **[Official Pitch Deck here »](https://docs.google.com/presentation/d/1la6VuclIqyZKOKgzifkMSvo_3OJAu-2QX1-pff0Y2a0/edit?usp=sharing)**
 
-🌐 **Try it live**: [https://lighteducation.pythonanywhere.com/](https://lighteducation.pythonanywhere.com/)
+🌐 **Try it live**: [https://lighteducation.pythonanywhere.com/](http://prompt2slides.eu-north-1.elasticbeanstalk.com/)
 
 Happy hacking, presenting, and teaching — anywhere, even offline! 🧠💡✨
