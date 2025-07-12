@@ -1,4 +1,4 @@
-# 📦 prompt2slides – Installation Guide
+# 📦 AI Slideshow Creator – Installation Guide
 
 This guide helps you set up the **AI Slideshow Creator AKA prompt2slides**, a Flask app that uses Gemini, Pexels, Pixabay, and ElevenLabs APIs to generate educational slideshows (offline-ready) with text, images, videos, and narration.
 
