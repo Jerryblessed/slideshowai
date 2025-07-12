@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Slideshow Creator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; color: white; }
+        h1 { font-size: 3rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .auth-section, .main-content { background: rgba(255,255,255,0.98); padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+        .auth-toggle { display: flex; justify-content: center; margin-bottom: 20px; }
+        .auth-toggle button { background: none; border: none; padding: 10px 20px; cursor: pointer; font-size: 1rem; border-bottom: 2px solid transparent; transition: all 0.3s ease; }
+        .auth-toggle button.active { border-bottom-color: #667eea; color: #667eea; font-weight: bold; }
+        .auth-form { display: none; max-width: 400px; margin: 0 auto; }
+        .auth-form.active { display: block; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; }
+        .btn { background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.3s ease; width: 100%; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .main-content { display: none; }
+        .main-content.visible { display: block; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .slideshow-display { margin-top: 30px; display: none; }
+        .slideshow-display.active { display: block; }
+        .slideshow-container { position: relative; background: #000; border-radius: 15px; overflow: hidden; aspect-ratio: 16/9; margin-bottom: 20px; }
+        .slideshow-container:fullscreen { width: 100vw; height: 100vh; border-radius: 0; }
+        .slide { display: none; width: 100%; height: 100%; position: absolute; }
+        .slide.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0.4; } to { opacity: 1; } }
+        .slide img, .slide video { width: 100%; height: 100%; object-fit: cover; }
+        .slide-number { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; z-index: 10; }
+        .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .control-btn { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-size: 1rem; }
+        .progress-bar { width: 100%; height: 6px; background: #ddd; border-radius: 3px; overflow: hidden; margin-bottom: 20px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.3s ease; }
+        .script-section { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .script-text { line-height: 1.6; color: #555; min-height: 50px; }
+        .slideshow-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; transition: background 0.3s ease; }
+        .slideshow-item:hover { background: #e9ecef; }
+        .slideshow-item-play { flex-grow: 1; cursor: pointer; }
+        .slideshow-item-actions button { margin-left: 10px; padding: 8px 12px; font-size: 0.9rem; width: auto;}
+        .btn-danger { background: #dc3545; }
+        .btn-secondary { background: #6c757d; }
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
+        .nav-tab { padding: 10px 20px; background: none; border: none; cursor: pointer; }
+        .nav-tab.active { background: #f8f9fa; border: 1px solid #ddd; border-bottom: 1px solid #f8f9fa; border-radius: 8px 8px 0 0; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .message { position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 15px; border-radius: 8px; color: white; font-weight: bold; }
+        .message.success { background: #28a745; } .message.error { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><h1>🎬 AI Slideshow Creator</h1></div>
+
+        <div class="auth-section" id="authSection">
+            <div class="auth-toggle"><button class="auth-tab active" onclick="showAuthForm('login')">Login</button><button class="auth-tab" onclick="showAuthForm('register')">Register</button></div>
+            <form id="loginForm" class="auth-form active" onsubmit="login(event)"><!-- ... --></form>
+            <form id="registerForm" class="auth-form" onsubmit="register(event)"><!-- ... --></form>
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <div class="user-info" id="userInfo"></div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="showTab('createTab')">Create Slideshow</button>
+                <button class="nav-tab" onclick="showTab('mySlideshowsTab')">My Slideshows</button>
+            </div>
+
+            <div class="tab-content active" id="createTab">
+                <div class="slideshow-creator"><!-- ... --></div>
+                <div class="slideshow-display" id="slideshowDisplay">
+                    <div class="slideshow-container" id="slideshowContainer">
+                        <div id="slideContainer"></div>
+                        <div class="slide-number" id="slideNumber"></div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    <div class="controls">
+                        <button class="control-btn" onclick="prevSlide()">⏮️</button>
+                        <button class="control-btn" onclick="togglePlayback()" id="playPauseBtn">▶️ Play</button>
+                        <button class="control-btn" onclick="nextSlide()">⏭️</button>
+                        <button class="control-btn" onclick="restartSlideshow()">🔄 Replay</button>
+                        <button class="control-btn" onclick="toggleFullScreen()">🖼️ Fullscreen</button>
+                    </div>
+                    <div class="script-section">
+                        <h3>📝 Narration</h3>
+                        <div class="script-text" id="scriptText"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="mySlideshowsTab">
+                <h2>My Saved Slideshows</h2>
+                <div id="slideshowsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Global State
+    let slides = [], scripts = [], audioFiles = [];
+    let currentSlideIndex = 0;
+    let isPlaying = false;
+    let currentAudio = null;
+
+    // --- DOM Elements ---
+    const authSection = document.getElementById('authSection');
+    const mainContent = document.getElementById('mainContent');
+    const slideshowDisplay = document.getElementById('slideshowDisplay');
+    const createBtn = document.getElementById('createBtn');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const slideshowContainer = document.getElementById('slideshowContainer');
+    const scriptText = document.getElementById('scriptText');
+    
+    // Fill in forms from template
+    document.getElementById('loginForm').innerHTML = `<div class="form-group"><label for="loginUsername">Username</label><input type="text" id="loginUsername" required></div><div class="form-group"><label for="loginPassword">Password</label><input type="password" id="loginPassword" required></div><button type="submit" class="btn">Login</button>`;
+    document.getElementById('registerForm').innerHTML = `<div class="form-group"><label for="registerUsername">Username</label><input type="text" id="registerUsername" required></div><div class="form-group"><label for="registerEmail">Email</label><input type="email" id="registerEmail" required></div><div class="form-group"><label for="registerPassword">Password</label><input type="password" id="registerPassword" required></div><button type="submit" class="btn">Register</button>`;
+    document.querySelector('.slideshow-creator').innerHTML = `<h2>Create New Slideshow</h2><form class="creator-form" onsubmit="createSlideshow(event)"><div class="form-group"><label for="queryInput">Search Query</label><input type="text" id="queryInput" placeholder="e.g., epic space battles" required></div><div class="form-row"><div class="form-group"><label for="mediaSource">Media Source</label><select id="mediaSource"><option value="pexels">Pexels</option><option value="pixabay">Pixabay</option></select></div><div class="form-group"><label for="mediaType">Media Type</label><select id="mediaType"><option value="photos">Photos</option><option value="videos">Videos</option></select></div><div class="form-group"><label for="numSlides">Number of Slides</label><select id="numSlides"><option value="5">5</option><option value="10" selected>10</option><option value="15">15</option></select></div></div><button type="submit" class="btn" id="createBtn">🎬 Create Slideshow</button></form>`;
+    document.getElementById('userInfo').innerHTML = `<span>Welcome, <strong id="usernameDisplay"></strong>!</span><button class="btn" style="width: auto;" onclick="logout()">Logout</button>`;
+    
+    // --- Utility Functions ---
+    const apiRequest = async (url, options = {}) => {
+        try {
+            const response = await fetch(url, options);
+            if (response.headers.get('Content-Type')?.includes('application/zip')) {
+                return response.blob();
+            }
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || `HTTP error! status: ${response.status}`);
+            return data;
+        } catch (error) { showMessage(error.message, 'error'); throw error; }
+    };
+    const showMessage = (msg, type = 'success') => {
+        const div = document.createElement('div');
+        div.className = `message ${type}`;
+        div.textContent = msg;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 4000);
+    };
+
+    // --- Authentication ---
+    const showAuthForm = type => {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+        document.querySelector(`button[onclick="showAuthForm('${type}')"]`).classList.add('active');
+        document.getElementById(`${type}Form`).classList.add('active');
+    };
+    const updateAuthState = (isAuthenticated, username = '') => {
+        authSection.style.display = isAuthenticated ? 'none' : 'block';
+        mainContent.classList.toggle('visible', isAuthenticated);
+        if (isAuthenticated) {
+            document.getElementById('usernameDisplay').textContent = username;
+            showTab('createTab');
+        }
+    };
+    const login = async e => { e.preventDefault(); try { const data = await apiRequest('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: e.target.elements.loginUsername.value, password: e.target.elements.loginPassword.value }) }); showMessage(data.message); updateAuthState(true, e.target.elements.loginUsername.value); } catch (error) {} };
+    const register = async e => { e.preventDefault(); try { const data = await apiRequest('/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: e.target.elements.registerUsername.value, email: e.target.elements.registerEmail.value, password: e.target.elements.registerPassword.value }) }); showMessage(data.message); updateAuthState(true, e.target.elements.registerUsername.value); } catch (error) {} };
+    const logout = async () => { try { const data = await apiRequest('/logout', { method: 'POST' }); showMessage(data.message); updateAuthState(false); location.reload(); } catch (error) {} };
+    const checkAuthStatus = async () => { try { const data = await apiRequest('/check_auth'); if (data.authenticated) updateAuthState(true, data.username); } catch (error) {} };
+
+    // --- Tabs ---
+    const showTab = tabId => {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`button[onclick="showTab('${tabId}')"]`).classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+        if (tabId === 'mySlideshowsTab') loadMySlideshows();
+    };
+
+    // --- Slideshow Creation & Display ---
+    const createSlideshow = async e => {
+        e.preventDefault();
+        const btn = e.target.elements.createBtn;
+        btn.disabled = true; btn.textContent = '🔄 Creating...';
+        try {
+            const data = await apiRequest('/create_slideshow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: document.getElementById('queryInput').value, media_source: document.getElementById('mediaSource').value, media_type: document.getElementById('mediaType').value, num_slides: parseInt(document.getElementById('numSlides').value) }) });
+            showMessage('Slideshow created successfully!');
+            setupSlideshow(data.media_urls, data.script_parts, data.audio_files);
+        } catch (error) {} 
+        finally { btn.disabled = false; btn.textContent = '🎬 Create Slideshow'; }
+    };
+
+    const setupSlideshow = (media, script, audio) => {
+        stopPlayback();
+        slides = media;
+        scripts = script;
+        audioFiles = audio;
+        currentSlideIndex = 0;
+        slideshowDisplay.classList.add('active');
+        displaySlide(currentSlideIndex);
+    };
+    
+    const displaySlide = index => {
+        if (index < 0 || index >= slides.length) return;
+        currentSlideIndex = index;
+
+        const slideContainer = document.getElementById('slideContainer');
+        slideContainer.innerHTML = '';
+        const media = slides[index];
+        const el = media.type === 'image' ? document.createElement('img') : document.createElement('video');
+        el.src = media.url;
+        if(media.type === 'video') { el.autoplay = true; el.muted = true; el.loop = true; }
+        el.className = 'slide active';
+        slideContainer.appendChild(el);
+
+        document.getElementById('slideNumber').textContent = `${index + 1} / ${slides.length}`;
+        document.getElementById('progressFill').style.width = `${((index + 1) / slides.length) * 100}%`;
+        scriptText.textContent = scripts[index] || "No script for this slide.";
+    };
+
+    const playAudioForSlide = index => {
+        if (currentAudio) currentAudio.pause();
+        const audioFile = audioFiles[index];
+        if (!audioFile) {
+            if (isPlaying) setTimeout(nextSlide, 3000); // If no audio, wait 3s then advance
+            return;
+        }
+        currentAudio = new Audio(`/static/audio/${audioFile}`);
+        currentAudio.play().catch(e => console.error("Audio play failed:", e));
+        currentAudio.onended = () => { if (isPlaying) nextSlide(); };
+    };
+
+    const nextSlide = () => {
+        const nextIndex = (currentSlideIndex + 1);
+        if (nextIndex >= slides.length) {
+            stopPlayback(); // End of slideshow
+            return;
+        }
+        displaySlide(nextIndex);
+        if (isPlaying) playAudioForSlide(nextIndex);
+    };
+    const prevSlide = () => {
+        const prevIndex = (currentSlideIndex - 1 + slides.length) % slides.length;
+        displaySlide(prevIndex);
+        if (isPlaying) playAudioForSlide(prevIndex);
+    };
+
+    const togglePlayback = () => {
+        isPlaying = !isPlaying;
+        playPauseBtn.textContent = isPlaying ? '⏸️ Pause' : '▶️ Play';
+        if (isPlaying) {
+            playAudioForSlide(currentSlideIndex);
+        } else {
+            if (currentAudio) currentAudio.pause();
+        }
+    };
+    
+    const stopPlayback = () => {
+        if (currentAudio) currentAudio.pause();
+        isPlaying = false;
+        playPauseBtn.textContent = '▶️ Play';
+    }
+
+    const restartSlideshow = () => {
+        stopPlayback();
+        displaySlide(0);
+    };
+
+    const toggleFullScreen = () => {
+        if (!document.fullscreenElement) {
+            slideshowContainer.requestFullscreen().catch(err => alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`));
+        } else {
+            document.exitFullscreen();
+        }
+    };
+
+    // --- Saved Slideshows ---
+    const loadMySlideshows = async () => {
+        const listEl = document.getElementById('slideshowsList');
+        listEl.innerHTML = '<p>Loading...</p>';
+        try {
+            const data = await apiRequest('/my_slideshows');
+            if (!data.slideshows || data.slideshows.length === 0) {
+                listEl.innerHTML = '<p>No slideshows found. Create one!</p>';
+                return;
+            }
+            listEl.innerHTML = data.slideshows.map(s => `
+                <div class="slideshow-item" id="slideshow-item-${s.id}">
+                    <div class="slideshow-item-play" onclick="loadSavedSlideshow(${s.id})">
+                        <h4>${s.title}</h4>
+                        <p>Query: ${s.query} | Created: ${new Date(s.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div class="slideshow-item-actions">
+                        <button class="btn btn-secondary" onclick="downloadSlideshow(event, ${s.id})">Download</button>
+                        <button class="btn btn-danger" onclick="deleteSlideshow(event, ${s.id})">Delete</button>
+                    </div>
+                </div>`).join('');
+        } catch (error) { listEl.innerHTML = '<p>Could not load slideshows.</p>'; }
+    };
+
+    const loadSavedSlideshow = async id => {
+        try {
+            const data = await apiRequest(`/get_slideshow/${id}`);
+            showTab('createTab');
+            setupSlideshow(data.media_urls, data.script_parts, data.audio_files);
+        } catch(error) {}
+    };
+
+    const deleteSlideshow = async (event, id) => {
+        event.stopPropagation();
+        if (!confirm('Are you sure you want to delete this slideshow permanently?')) return;
+        try {
+            await apiRequest(`/delete_slideshow/${id}`, { method: 'DELETE' });
+            showMessage('Slideshow deleted.');
+            document.getElementById(`slideshow-item-${id}`).remove();
+        } catch(error) {}
+    };
+    
+    const downloadSlideshow = async (event, id) => {
+        event.stopPropagation();
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Packaging...';
+        try {
+            const blob = await apiRequest(`/download_slideshow/${id}`);
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `slideshow_${id}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            showMessage('Download started.');
+        } catch(error) {
+            showMessage('Failed to prepare download.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Download';
+        }
+    };
+    
+    document.addEventListener('DOMContentLoaded', checkAuthStatus);
+    </script>
+</body>
+</html>

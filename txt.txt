@@ -1,0 +1,4 @@
+AIzaSyBU_3NNernMnnKXgASt2rurUbnH8wfZsP0
+
+
+nice, as much as possible could you make each slide text to march the image and video and could you fix this, I tired downloading but it showed Error cleaning up temp files: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\OPEJER~1\\AppData\\Local\\Temp\\slideshow_1.zip'
